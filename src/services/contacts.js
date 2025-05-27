@@ -7,6 +7,11 @@ export async function getAllContacts() {
 
 export async function getContactById(contactId) {
   const contact = await ContactsCollection.findById(contactId);
+
+  if (!contact) {
+    return null;
+  }
+
   return contact;
 }
 
@@ -38,6 +43,10 @@ export async function deleteContact(contactId) {
   const contact = await ContactsCollection.findOneAndDelete({
     _id: contactId,
   });
+
+  if (!contact) {
+    return null;
+  }
 
   return contact;
 }

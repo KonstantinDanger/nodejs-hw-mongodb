@@ -12,15 +12,23 @@ export async function getAllContactsController(req, res) {
 
   res.status(200).json({
     status: 200,
+    message: 'Contacts found',
     data: contacts,
   });
 }
 
-export async function getContactByIdController(req, res) {
-  const contact = await getContactById(req.params.contactId);
+export async function getContactByIdController(req, res, next) {
+  const { contactId } = req.params;
+  const contact = await getContactById(contactId);
+
+  if (!contact) {
+    next(createHttpError(404, 'Contact not found'));
+    return;
+  }
 
   res.status(200).json({
     status: 200,
+    message: `Contact with id '${contactId}' found`,
     data: contact,
   });
 }
@@ -39,6 +47,11 @@ export async function patchContactController(req, res, next) {
   const { contactId } = req.params;
   const payload = req.body;
   const data = await updateContact(contactId, payload);
+
+  if (!data) {
+    next(createHttpError(404, 'Contact not found'));
+    return;
+  }
 
   res.status(200).json({
     status: 200,
