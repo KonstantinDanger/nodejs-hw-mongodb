@@ -11,3 +11,5 @@ export const KEYS_OF_CONTACT = [
   'isFavourite',
   'contactType',
 ];
+
+export const CONTACT_TYPES = ['work', 'home', 'personal'];
