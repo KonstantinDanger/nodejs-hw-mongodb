@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import getEnvVar from './utils/getEnvVar.js';
-import contactsRouter from './routers/contactRoutes.js';
+import router from './routers/index.js';
 
 import { pinoHttp } from 'pino-http';
 import { errorHandler } from './middlewares/errorHandler.js';
@@ -23,7 +23,7 @@ export function setupServer(params) {
 
   app.use(pinoHttp({ transport: { target: 'pino-pretty' } }));
 
-  app.use(contactsRouter);
+  app.use(router);
 
   app.use('{/*any}', notFoundHandler);
 
