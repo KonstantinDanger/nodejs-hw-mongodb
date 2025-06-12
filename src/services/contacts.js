@@ -1,8 +1,10 @@
+import createHttpError from 'http-errors';
 import { SORT_ORDER } from '../constants.js';
 import { ContactsCollection } from '../models/contact.js';
 import { calculatePaginationData } from '../utils/parsePaginationParams.js';
 
 export async function getAllContacts({
+  userId,
   page = 1,
   perPage = 10,
   sortOrder = SORT_ORDER.ASC,
@@ -10,7 +12,9 @@ export async function getAllContacts({
   filter = {},
 }) {
   const offset = (page - 1) * perPage;
-  const contactsQuery = ContactsCollection.find();
+  const contactsQuery = ContactsCollection.find()
+    .where('userId')
+    .equals(userId);
 
   if (filter.isFavourite) {
     contactsQuery.where('isFavourite').equals(filter.isFavourite);
@@ -21,6 +25,8 @@ export async function getAllContacts({
   }
 
   const contactsCount = await ContactsCollection.find()
+    .where('userId')
+    .equals(userId)
     .merge(contactsQuery)
     .countDocuments();
   const paginationData = calculatePaginationData(contactsCount, page, perPage);
@@ -37,8 +43,11 @@ export async function getAllContacts({
   };
 }
 
-export async function getContactById(contactId) {
-  const contact = await ContactsCollection.findById(contactId);
+export async function getContactById(contactId, userId) {
+  const contact = await ContactsCollection.findOne({
+    _id: contactId,
+    userId: userId,
+  });
 
   if (!contact) {
     return null;
@@ -47,22 +56,23 @@ export async function getContactById(contactId) {
   return contact;
 }
 
-export async function createContact(payload) {
-  const contact = await ContactsCollection.create(payload);
+export async function createContact(payload, userId) {
+  const contact = await ContactsCollection.create({ ...payload, userId });
   return contact;
 }
 
-export async function updateContact(contacId, payload, options = {}) {
+export async function updateContact(contactId, userId, payload, options = {}) {
   const rawResult = await ContactsCollection.findOneAndUpdate(
     {
-      _id: contacId,
+      _id: contactId,
+      userId: userId,
     },
     payload,
     { new: true, includeResultMetadata: true, ...options },
   );
 
   if (!rawResult?.value) {
-    return null;
+    throw createHttpError(404, 'Contact not found');
   }
 
   return {
@@ -71,9 +81,10 @@ export async function updateContact(contacId, payload, options = {}) {
   };
 }
 
-export async function deleteContact(contactId) {
+export async function deleteContact(contactId, userId) {
   const contact = await ContactsCollection.findOneAndDelete({
     _id: contactId,
+    userId: userId,
   });
 
   if (!contact) {
