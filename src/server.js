@@ -7,6 +7,7 @@ import router from './routers/index.js';
 import { pinoHttp } from 'pino-http';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
+import cookieParser from 'cookie-parser';
 
 dotenv.config();
 
@@ -22,6 +23,8 @@ export function setupServer(params) {
   app.use(cors({ allowedHeaders: '*' }));
 
   app.use(pinoHttp({ transport: { target: 'pino-pretty' } }));
+
+  app.use(cookieParser());
 
   app.use(router);
 
