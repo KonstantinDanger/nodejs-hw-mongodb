@@ -1,8 +1,26 @@
 import {
+  REFRESH_TOKEN_COOKIE_KEY,
+  SESSION_ID_COOKIE_KEY,
+} from '../constants.js';
+
+import {
   loginUser,
+  logoutUser,
   refreshUserSession,
   registerUser,
 } from '../services/auth.js';
+
+const setupSession = (res, session) => {
+  res.cookie(REFRESH_TOKEN_COOKIE_KEY, session.refreshToken, {
+    httpOnly: true,
+    expires: session.refreshTokenValidUntil,
+  });
+
+  res.cookie(SESSION_ID_COOKIE_KEY, session._id, {
+    httpOnly: true,
+    expires: session.refreshTokenValidUntil,
+  });
+};
 
 export const registerUserController = async (req, res) => {
   const user = await registerUser(req.body);
@@ -15,7 +33,7 @@ export const registerUserController = async (req, res) => {
 
 export const loginUserController = async (req, res) => {
   const session = await loginUser(req.body);
-
+  console.log('session in controller:', session);
   setupSession(res, session);
 
   res.status(200).json({
@@ -38,14 +56,14 @@ export const refreshUserController = async (req, res) => {
   });
 };
 
-const setupSession = (res, session) => {
-  res.cookie('refreshToken', session.refreshToken, {
-    httpOnly: true,
-    expirationDate: session.refreshTokenValidUntil,
-  });
+export const logoutUserController = async (req, res) => {
+  const sessionId = req.cookies.sessionId;
+  if (sessionId) {
+    await logoutUser(sessionId);
+  }
 
-  res.cookie('sessionId', session._id, {
-    httpOnly: true,
-    expirationDate: session.refreshTokenValidUntil,
-  });
+  res.clearCookie(SESSION_ID_COOKIE_KEY);
+  res.clearCookie(REFRESH_TOKEN_COOKIE_KEY);
+
+  res.status(204).send();
 };

@@ -6,6 +6,21 @@ import { UsersCollection } from '../models/user.js';
 import { SessionsCollection } from '../models/session.js';
 import { FIFTEEN_MINUTES, ONE_DAY } from '../constants.js';
 
+const createSession = () => {
+  const accessToken = randomBytes(30).toString('base64');
+  const accessTokenExpirationDate = new Date(Date.now() + FIFTEEN_MINUTES);
+
+  const refreshToken = randomBytes(30).toString('base64');
+  const refreshTokenExpirationDate = new Date(Date.now() + ONE_DAY);
+
+  return {
+    accessToken: accessToken,
+    refreshToken: refreshToken,
+    accessTokenValidUntil: accessTokenExpirationDate,
+    refreshTokenValidUntil: refreshTokenExpirationDate,
+  };
+};
+
 export const registerUser = async (payload) => {
   const { email, password } = payload;
 
@@ -80,17 +95,6 @@ export const refreshUserSession = async ({ sessionId, refreshToken }) => {
   return updatedSession;
 };
 
-const createSession = () => {
-  const accessToken = randomBytes(30).toString('base64');
-  const accessTokenExpirationDate = new Date(Date.now() + FIFTEEN_MINUTES);
-
-  const refreshToken = randomBytes(30).toString('base64');
-  const refreshTokenExpirationDate = new Date(Date.now() + ONE_DAY);
-
-  return {
-    accessToken: accessToken,
-    refreshToken: refreshToken,
-    accessTokenValidUntil: accessTokenExpirationDate,
-    refreshTokenValidUntil: refreshTokenExpirationDate,
-  };
+export const logoutUser = async (sessionId) => {
+  await SessionsCollection.deleteOne({ _id: sessionId });
 };
