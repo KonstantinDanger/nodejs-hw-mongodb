@@ -30,6 +30,9 @@ const contactSchema = new Schema(
       required: true,
       default: 'personal',
     },
+    photo: {
+      type: String,
+    },
   },
   {
     timestamps: true,

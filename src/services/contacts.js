@@ -67,7 +67,7 @@ export async function updateContact(contactId, userId, payload, options = {}) {
       _id: contactId,
       userId: userId,
     },
-    payload,
+    { ...payload },
     { new: true, includeResultMetadata: true, ...options },
   );
 
