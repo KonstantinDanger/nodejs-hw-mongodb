@@ -1,3 +1,4 @@
+import createHttpError from 'http-errors';
 import {
   REFRESH_TOKEN_COOKIE_KEY,
   SESSION_ID_COOKIE_KEY,
@@ -9,6 +10,7 @@ import {
   refreshUserSession,
   registerUser,
   requestResetToken,
+  resetPassword,
 } from '../services/auth.js';
 
 const setupSession = (res, session) => {
@@ -69,11 +71,28 @@ export const logoutUserController = async (req, res) => {
   res.status(204).send();
 };
 
-export const requestResetEmailController = async (req, res) => {
-  await requestResetToken(req.body.email);
+export const requestResetEmailController = async (req, res, next) => {
+  try {
+    await requestResetToken(req.body.email);
+  } catch {
+    next(
+      createHttpError(500, 'Failed to send the email, please try again later.'),
+    );
+  }
 
   res.status(200).json({
     message: 'Reset password email has been successfully sent.',
+    data: {},
+  });
+};
+
+export const resetPasswordController = async (req, res) => {
+  const { password, token } = req.body;
+
+  await resetPassword(password, token);
+
+  res.status(200).json({
+    message: 'Password was successfully reset!',
     data: {},
   });
 };

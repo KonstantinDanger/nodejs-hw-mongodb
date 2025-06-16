@@ -1,12 +1,22 @@
 import createHttpError from 'http-errors';
+import handleBars from 'handlebars';
 import getEnvVar from '../utils/getEnvVar.js';
 import bcrypt from 'bcrypt';
+import path from 'node:path';
 import jwt from 'jsonwebtoken';
+import fs from 'node:fs/promises';
 
 import { randomBytes } from 'crypto';
 import { UsersCollection } from '../models/user.js';
 import { SessionsCollection } from '../models/session.js';
-import { FIFTEEN_MINUTES, JWT_SECRET, ONE_DAY, SMTP } from '../constants.js';
+import {
+  APP_DOMAIN,
+  FIFTEEN_MINUTES,
+  JWT_SECRET,
+  ONE_DAY,
+  SMTP,
+  TEMPLATES_DIR,
+} from '../constants.js';
 import { sendEmail } from '../utils/sendEmail.js';
 
 const createSession = () => {
@@ -116,14 +126,58 @@ export const requestResetToken = async (email) => {
     },
     getEnvVar(JWT_SECRET),
     {
-      expiresIn: '15m',
+      expiresIn: '5m',
     },
   );
+
+  const resetPasswordTemplatePath = path.join(
+    TEMPLATES_DIR,
+    'reset-password-email.html',
+  );
+
+  const templateSource = (
+    await fs.readFile(resetPasswordTemplatePath)
+  ).toString();
+
+  const template = handleBars.compile(templateSource);
+
+  const html = template({
+    name: user.name,
+    link: `${getEnvVar(APP_DOMAIN)}/auth/reset-password?token=${resetToken}`,
+  });
 
   await sendEmail({
     from: getEnvVar(SMTP.SMTP_FROM),
     to: email,
     subject: 'Reset password',
-    html: `<p>Click <a href="${resetToken}">here</a> to reset your password!</p>`,
+    html,
   });
+};
+
+export const resetPassword = async (newPassword, token) => {
+  let tokenEntries;
+
+  try {
+    tokenEntries = jwt.verify(token, getEnvVar(JWT_SECRET));
+  } catch (error) {
+    if (error instanceof Error) {
+      throw createHttpError(401, error.message);
+    }
+  }
+
+  const user = await UsersCollection.findOne({
+    email: tokenEntries.email,
+    _id: tokenEntries.sub,
+  });
+
+  if (!user) {
+    throw createHttpError(404, 'User not found');
+  }
+
+  const encryptedPassword = await bcrypt.hash(newPassword, 10);
+
+  await UsersCollection.updateOne(
+    { _id: user._id },
+    { password: encryptedPassword },
+  );
 };
