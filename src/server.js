@@ -3,11 +3,11 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import getEnvVar from './utils/getEnvVar.js';
 import router from './routers/index.js';
+import cookieParser from 'cookie-parser';
 
 import { pinoHttp } from 'pino-http';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
-import cookieParser from 'cookie-parser';
 
 dotenv.config();
 
