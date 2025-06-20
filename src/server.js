@@ -9,6 +9,7 @@ import { notFoundHandler } from './middlewares/notFoundHandler.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { UPLOAD_DIR } from './constants.js';
 import { pinoHttp } from 'pino-http';
+import { swaggerDocs } from './middlewares/swaggerDocs.js';
 
 dotenv.config();
 
@@ -28,6 +29,8 @@ export function setupServer(params) {
   app.use(cookieParser());
 
   app.use(router);
+
+  app.use('/api-docs', swaggerDocs());
 
   app.use('/uploads', express.static(UPLOAD_DIR));
 
