@@ -1,6 +1,6 @@
 apis:
   sample@v1:
-    root: ./docs/
+    root: docs/
 extends:
   - recommended
 rules:
